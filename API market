@@ -1,0 +1,62 @@
+const express = require('express');
+const axios = require('axios');
+
+const app = express();
+app.use(express.json());
+
+// Placeholder function to fetch yield estimates from public sources
+async function getYieldEstimate(cropType, landSize) {
+    // Replace with actual API or dataset lookup
+    const yieldPerAcre = {
+        wheat: 3.2,
+        rice: 2.8,
+        maize: 4.0
+    };
+    return yieldPerAcre[cropType.toLowerCase()] * landSize || 0;
+}
+
+// Placeholder function to fetch market price from public sources
+async function getMarketPrice(cropType, location) {
+    // Replace with actual API request
+    return Math.random() * (30 - 10) + 10; // Random price between $10 and $30 per unit
+}
+
+// Profit calculation route
+app.post('/calculate-profit', async (req, res) => {
+    try {
+        const { cropType, landSize, location } = req.body;
+        if (!cropType || !landSize || !location) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const estimatedYield = await getYieldEstimate(cropType, landSize);
+        const marketPrice = await getMarketPrice(cropType, location);
+
+        const costs = {
+            fertilizers: 50 * landSize,
+            labor: 100 * landSize,
+            irrigation: 30 * landSize,
+            other: 20 * landSize
+        };
+
+        const totalCost = Object.values(costs).reduce((a, b) => a + b, 0);
+        const revenue = estimatedYield * marketPrice;
+        const profit = revenue - totalCost;
+
+        res.json({
+            estimatedYield,
+            marketPrice,
+            costs,
+            totalCost,
+            revenue,
+            profit
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`API running on port ${PORT}`);
+});
